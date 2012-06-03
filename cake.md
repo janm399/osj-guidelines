@@ -129,8 +129,8 @@ All that’s left is actually invoking the service methods, that can be done by 
 
 #####Listing 9. Invoking services
 ```scala
-    val userService = ApplicationLive.userService
-    userService.findAll
+val userService = ApplicationLive.userService
+userService.findAll
 ```
 *Simple yeah?*
 #Testing
