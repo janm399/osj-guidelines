@@ -9,38 +9,38 @@ First off, I think a quick overview of traits is necessary considering the targe
 
 #####Listing 1. A simple trait
 ```scala
-    trait SimpleTrait {
-      def addOne(x: Int): Int = {x+1}
-    }
+trait SimpleTrait {
+  def addOne(x: Int): Int = {x+1}
+}
 ```
 We can instantiate this trait in two ways, the long hand way where we manually create a class and instantiate that; as per Listing 2:
 
 #####Listing 2. Instantiating a trait, the long way
 ```scala
-    class SimpleClass extends SimpleTrait
-    val addOne = new SimpleClass
+class SimpleClass extends SimpleTrait
+val addOne = new SimpleClass
 ```
 Or the shorthand way where an anonymous class is implicitly created for us in Listing 3:
 
 #####Listing 3. Shorthand Trait instantiation
 ```scala
-    val addOne = new SimpleTrait{}
+val addOne = new SimpleTrait{}
 ```
 #And on we go
 We’re going to write a simple application for saving and retrieving User objects. So, first we need to define our repository. We’ll start off with the API definition, then move onto the implementation of this.
 
 #####Listing 4. Repository API definition
 ```scala
-    trait UserRepositoryComponent {
-      def userLocator : UserLocator
-      def userUpdater : UserUpdater
-      trait UserLocator {
-        def findAll: java.util.List[User]
-      }
-      trait UserUpdater {
-        def save(user: User)
-      }
-    }
+trait UserRepositoryComponent {
+  def userLocator : UserLocator
+  def userUpdater : UserUpdater
+  trait UserLocator {
+    def findAll: java.util.List[User]
+  }
+  trait UserUpdater {
+    def save(user: User)
+  }
+}
 ```
 Above we have a trait ``UserRepositoryComponent`` which is best described as a wrapper or container for all repository traits containing user related operations. Lets explain this line by line to make sure everything is clear:
 
@@ -52,18 +52,18 @@ Right, so we’ve defined what we want our repository to do so I guess it’s ti
 
 #####Listing 5. Repository JPA implementation
 ```scala
-    trait UserRepositoryJPAComponent extends UserRepositoryComponent {
-      val em: EntityManager
-      def userLocator = new UserLocatorJPA(em)
-      def userUpdater = new UserUpdaterJPA(em)
+trait UserRepositoryJPAComponent extends UserRepositoryComponent {
+  val em: EntityManager
+  def userLocator = new UserLocatorJPA(em)
+  def userUpdater = new UserUpdaterJPA(em)
 
-      class UserLocatorJPA(val em: EntityManager) extends UserLocator {
-        def findAll = em.createQuery("from User", classOf[User]).getResultList
-      }
-      class UserUpdaterJPA(val em: EntityManager) extends UserUpdater {
-        def save(user: User) { em.persist(user) }
-      }
-    }
+  class UserLocatorJPA(val em: EntityManager) extends UserLocator {
+    def findAll = em.createQuery("from User", classOf[User]).getResultList
+  }
+  class UserUpdaterJPA(val em: EntityManager) extends UserUpdater {
+    def save(user: User) { em.persist(user) }
+  }
+}
 ```
 This is fairly simple, but let’s walk through it step by step (half of it anyway, I’ll ignore the ``UserUpdater`` as it’s pretty much the same as the ``UserLocator`` stuff):
 
@@ -76,32 +76,32 @@ Next up we need to implement the service tier which will take advantage of the a
 
 #####Listing 6. Service API
 ```scala
-    trait UserServiceComponent {
-      def userService: UserService
+trait UserServiceComponent {
+  def userService: UserService
 
-      trait UserService {
-        def findAll: java.util.List[User]
-        def save(user: User)
-      }
-    }
+  trait UserService {
+    def findAll: java.util.List[User]
+    def save(user: User)
+  }
+}
 ```
 This is very similar to the ``UserRepositoryComponent`` trait defined previously and so should be familiar. We’ll move straight on to the implementation:
 
 #####Listing 7. Service Implementation
 ```scala
-    trait DefaultUserServiceComponent extends UserServiceComponent {
-      this: UserRepositoryComponent =>
+trait DefaultUserServiceComponent extends UserServiceComponent {
+  this: UserRepositoryComponent =>
 
-      def userService = new DefaultUserService
+  def userService = new DefaultUserService
 
-      class DefaultUserService extends UserService {
-        def findAll = userLocator.findAll
+  class DefaultUserService extends UserService {
+    def findAll = userLocator.findAll
 
-        def save(user: User) {
-          userUpdater.save(user: User)
-        }
-      }
+    def save(user: User) {
+      userUpdater.save(user: User)
     }
+  }
+}
 ```
 There are a couple of interesting things happening here so we’ll walk through this bit by bit:
 
@@ -113,14 +113,14 @@ Now we’ve got everything defined and implemented, we need a way of instantiati
 
 #####Listing 8. Application wrapper
 ```scala
-    object ApplicationLive {
-      val userServiceComponent = 
-        new DefaultUserServiceComponent with UserRepositoryJPAComponent {   
-        val em = Persistence.createEntityManagerFactory("cake.pattern").
-                         createEntityManager() 
-      }
-      val userService = userServiceComponent.userService
-    }
+object ApplicationLive {
+  val userServiceComponent = 
+    new DefaultUserServiceComponent with UserRepositoryJPAComponent {   
+    val em = Persistence.createEntityManagerFactory("cake.pattern").
+                     createEntityManager() 
+  }
+  val userService = userServiceComponent.userService
+}
 ```
 
 We first define and instantiate a ``UserServiceComponent``, mixing in the appropriate repository implementation, as required by the self-type annotation described earlier. We then provide the ``UserRepositoryJPAComponent`` implementation for instantiating the ``EntityManager``. Finally we define a ``userService val`` for accessing the service methods.
@@ -138,30 +138,30 @@ To test these services we’re going to write a Specs2 integration specification
 
 #####Listing 10. Test specifications!
 ```scala
-    class CakeTestSpecification extends Specification with Mockito {
-      trait MockEntitManager {
-        val em = mock[EntityManager]
+class CakeTestSpecification extends Specification with Mockito {
+  trait MockEntitManager {
+    val em = mock[EntityManager]
 
-        def expect(f: (EntityManager) => Any) {
-          f(em)
-        }
-      }
-
-      "findAll should use the EntityManager's typed queries" in {
-        val query = mock[TypedQuery[User]]
-        val users: java.util.List[User] = new ArrayList[User]()
-
-        val userService = new DefaultUserServiceComponent
-                            with UserRepositoryJPAComponent
-                            with MockEntitManager
-        userService.expect { em=>
-          em.createQuery("from User", classOf[User]) returns query
-          query.getResultList returns users
-        }
-    
-        userService.userService.findAll must_== users
-      }
+    def expect(f: (EntityManager) => Any) {
+      f(em)
     }
+  }
+
+  "findAll should use the EntityManager's typed queries" in {
+    val query = mock[TypedQuery[User]]
+    val users: java.util.List[User] = new ArrayList[User]()
+
+    val userService = new DefaultUserServiceComponent
+                        with UserRepositoryJPAComponent
+                        with MockEntitManager
+    userService.expect { em=>
+      em.createQuery("from User", classOf[User]) returns query
+      query.getResultList returns users
+    }
+
+    userService.userService.findAll must_== users
+  }
+}
 ```
 
 What we’ve done here is mock out the ``EntityManager`` using a trait, whilst allowing the callee to pass a function to the trait to initialise the mock according to the specific requirements of the test. In our example this means mocking the ``createQuery.getResultList`` function to return an empty ``List``. A similar pattern could be used for mocking out the whole repository or service traits. The implementation details of this test Specs2 specification are beyond the scope of this article, however it will hopefully give you a head start when writing your own tests.
