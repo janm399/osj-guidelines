@@ -13,4 +13,4 @@ The format of the Open Document should follow the markdown formatting:
 
 These formats translate directly to the markdown syntax. If you are using Open Document, do not use any advanced formatting.
 
-For example, head over to [sample.md](sample.md)
+For example, head over to [sample.md](osj-guidelines/sample.md)
