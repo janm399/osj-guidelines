@@ -84,7 +84,7 @@ Next up we need to implement the service tier which will take advantage of the a
         def save(user: User)
       }
     }
-
+```
 This is very similar to the ``UserRepositoryComponent`` trait defined previously and so should be familiar. We’ll move straight on to the implementation:
 
 #####Listing 7. Service Implementation
@@ -121,7 +121,7 @@ Now we’ve got everything defined and implemented, we need a way of instantiati
       }
       val userService = userServiceComponent.userService
     }
- ```
+```
 
 We first define and instantiate a ``UserServiceComponent``, mixing in the appropriate repository implementation, as required by the self-type annotation described earlier. We then provide the ``UserRepositoryJPAComponent`` implementation for instantiating the ``EntityManager``. Finally we define a ``userService val`` for accessing the service methods.
 
