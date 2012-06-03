@@ -13,7 +13,7 @@ Use heading 6 for the figure caption and be sure to number the figure correctly.
 #Dive in
 The following paragraphs should start exploring the outline from the introduction. This is the place to use ``inline code`` as well as larger listing blocks; as shown in Listing 1.
 
-######Listing 1. Orchestra model
+######Listing 1. The domain
 ```scala
 	case class Name(first: String, last: String, middle: Option[String] = None)
 	case class Address(line1: String, line2: String, ...)
